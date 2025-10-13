@@ -1,6 +1,6 @@
 # Dynamic Capability Acquisition Protocol (DCAP)
 
-**Version**: 2.2 (Latest)  
+**Version**: 2.3 (Latest)  
 **Date**: October 2025  
 **Author**: M. Maurer  
 
