@@ -1,13 +1,8 @@
 # Dynamic Capability Acquisition Protocol (DCAP)
 
-**Version**: 2.2 (Latest)  
+**Version**: 2.3  
 **Date**: October 2025  
 **Author**: M. Maurer  
-
-> **Note:** This file always contains the latest version of the DCAP specification.  
-> For specific versions, see [DCAP-v2.3.md](./DCAP-v2.3.md), [DCAP-v2.2.md](./DCAP-v2.2.md), [DCAP-v2.1.md](./DCAP-v2.1.md), [DCAP-v2.0.md](./DCAP-v2.0.md)
-
----
 
 ## Abstract
 
