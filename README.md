@@ -1,125 +1,168 @@
-# DCAP Specification Repository
+# Dynamic Capability Acquisition Protocol (DCAP)
 
-This repository contains all versions of the Dynamic Capability Acquisition Protocol (DCAP) specification.
+> **"The robots.txt for AI agents"**
 
-## Current Version
+DCAP is a decentralized protocol enabling autonomous agents to discover, evaluate, and acquire computational capabilities at runtime through semantic broadcasting.
 
-**Latest:** [DCAP.md](./DCAP.md) - Version 2.2 (October 2025)
+## 🎯 Quick Start
 
-## Version History
+**Latest Specification:** [DCAP.md](./DCAP.md) - **Version 2.4** (October 2025)
 
-### [Version 2.2](./DCAP-v2.2.md) - October 2025
-**Status:** Current
-
-**Key Changes:**
-- Added `cost_paid` field to `perf_update` for economic tracking
-- Added `currency` field to `perf_update` for multi-currency support
-- Economic efficiency optimization guidelines (Section 5.4)
-- Cost data transparency considerations (Section 6.3.2)
-- Updated tool ranking to include cost optimization
-
-**Migration from v2.1:**
-- Fully backward compatible
-- Cost fields are optional
-- Existing v2.1 implementations continue to work
-
-**Rationale:**
-- Performance optimization includes both speed AND cost
-- Oracle agents need cost data to recommend economically efficient tool chains
-- Transparency enables market efficiency and price discovery
+**For automation/parsing:** Always fetch `DCAP.md` - it's a stable URL that always points to the latest version.
 
 ---
 
-### [Version 2.1](./DCAP-v2.1.md) - October 2025
-**Status:** Superseded
+## 📋 Current Version: 2.4
 
-**Key Changes:**
-- Enhanced `perf_update` message with optional `ctx` object
-- Support for sanitized `ctx.args` in performance updates
-- Chain pattern detection guidelines (Section 5.3)
-- Argument sanitization requirements (Section 6.3.1)
-- Intelligence consumer requirements (Section 7.4)
+### Key Features
 
-**Migration from v2.0:**
-- Fully backward compatible
-- All new fields are optional
-- Existing v2.0 implementations continue to work
+✅ **Format-agnostic agent identification** (`ctx.caller`)  
+✅ **Independent payment tracking** (`ctx.payer`)  
+✅ **Collision-tolerant session aggregation**  
+✅ **Opt-in participation model** (robots.txt philosophy)  
+✅ **No validation or constraints** on identifier formats  
+
+### What's New in v2.4
+
+**Added `ctx.caller` field:**
+```json
+{
+  "ctx": {
+    "caller": "any-string-identifier",  // Agent self-ID
+    "payer": "0x123abc..."              // Payment address (independent)
+  }
+}
+```
+
+**Key Points:**
+- `ctx.caller`: Any string chosen by agent (UUID, pseudonym, emoji, whatever!)
+- `ctx.payer`: Payment address from transaction protocol
+- Both optional and independent
+- Session aggregation: prefer `caller`, fallback to `payer`
+- Embraces emergent intelligence without constraining agents
+
+**Full changelog:** See [archive/v2.4.md](./archive/v2.4.md)
 
 ---
 
-### [Version 2.0](./DCAP-v2.0.md) - September 2025
-**Status:** Superseded
+## 📚 Version History
 
-**Initial Features:**
-- UDP broadcast for capability advertisement
-- WebSocket distribution layer
-- Three message types: `semantic_discover`, `perf_update`, `error_pattern`
-- Semantic matching algorithms
-- Security and privacy considerations
+All historical versions are archived for reference:
+
+- **[v2.4](./archive/v2.4.md)** (October 2025) - Format-agnostic agent identification
+- **[v2.3](./archive/v2.3.md)** (October 2025) - Payment attribution with `ctx.payer`
+- **[v2.2](./archive/v2.2.md)** (October 2025) - Cost tracking and economic efficiency
+- **[v2.1](./archive/v2.1.md)** (October 2025) - Chain pattern detection with `ctx.args`
+- **[v2.0](./archive/v2.0.md)** (September 2025) - Initial public specification
 
 ---
 
-## Implementation Guide
+## 🚀 Implementation Guide
 
 ### For Tool Providers
 
-**New implementations:** Use [Version 2.1](./DCAP-v2.1.md)
-- Implement `perf_update` with `ctx.args` for better observability
-- Follow argument sanitization guidelines (Section 6.3.1)
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.4)
 
-**Existing v2.0 implementations:** 
-- Continue working without changes
-- Upgrade recommended for chain detection support
+```javascript
+// Minimal implementation
+{
+  "v": 2,
+  "t": "perf_update",
+  "sid": "your-tool-id",
+  "tool": "read_file",
+  "exec_ms": 45,
+  "success": true
+}
+
+// With optional agent tracking (enables chain detection)
+{
+  "v": 2,
+  "t": "perf_update",
+  "sid": "your-tool-id",
+  "tool": "read_file",
+  "exec_ms": 45,
+  "success": true,
+  "ctx": {
+    "caller": "agent-uuid-123"  // Any string works!
+  }
+}
+```
 
 ### For Agent Consumers
 
-**New implementations:** Use [Version 2.1](./DCAP-v2.1.md)
-- Parse `ctx.args` from `perf_update` messages
-- Implement local performance tracking
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.4)
 
-**Existing v2.0 implementations:**
-- Continue working without changes
-- Gracefully ignore unknown fields in `ctx`
+- Include `ctx.caller` in your tool invocations for better recommendations
+- Use any identifier you want - format is unconstrained
+- Opt-in: omitting `ctx.caller` still works, just no chain aggregation
 
-### For Intelligence Systems (Oracle Agents)
+### For Intelligence Systems
 
-**Use [Version 2.1](./DCAP-v2.1.md):**
-- Track `perf_update` sequences by `sid` (Section 5.3)
-- Build statistical models of tool chains
-- Respect privacy of observed `ctx.args`
+**Required:** Implement [DCAP.md](./DCAP.md) (v2.4)
 
----
-
-## Version Selection Guide
-
-| Use Case | Recommended Version |
-|----------|---------------------|
-| New tool provider | v2.2 |
-| New agent consumer | v2.2 |
-| Intelligence/Oracle system | v2.2 (required for cost optimization) |
-| Cost-aware applications | v2.2 (required) |
-| Existing v2.1 system | v2.1 (works fine, upgrade for cost tracking) |
-| Existing stable system | v2.0 (works fine, missing features) |
-| Maximum compatibility | v2.0 |
+```javascript
+// Session aggregation logic
+const sessionId = ctx?.caller || ctx?.payer;
+if (sessionId) {
+  // Group perf_updates by session
+  // Build observed_sequence messages
+}
+```
 
 ---
 
-## Contributing
+## 🎓 Philosophy
 
-To propose changes to the specification:
-1. Create a new version file (e.g., `DCAP-v2.2.md`)
-2. Document all changes in the Changelog section
-3. Update this README with version details
-4. Submit for review
+DCAP follows the **robots.txt model**:
+
+- **Opt-in participation**: All fields beyond basics are optional
+- **No gatekeeping**: No validation, no registration, no approval
+- **Format-agnostic**: Accept any string, embrace emergence
+- **Collision-tolerant**: Let timestamps and context disambiguate
+- **Evolution over perfection**: Watch what happens, adapt
+
+**"We don't validate. We don't constrain. We observe and adapt."**
 
 ---
 
-## License
+## 📦 Version Selection
+
+| Use Case | Version |
+|----------|---------|
+| New implementations | [DCAP.md](./DCAP.md) (v2.4) |
+| Agent identification | v2.4+ (required) |
+| Payment tracking | v2.3+ |
+| Cost optimization | v2.2+ |
+| Chain detection | v2.1+ |
+| Basic discovery | v2.0 (works but limited) |
+
+**Migration:** All versions are backward compatible. Upgrade anytime.
+
+---
+
+## 🤝 Contributing
+
+To propose changes:
+
+1. Draft your changes to `DCAP.md`
+2. Create a new version in `archive/vX.Y.md`
+3. Update this README
+4. Submit PR with rationale
+
+**Philosophy:** Propose boldly. Validate through use.
+
+---
+
+## 📜 License
 
 This specification is provided as-is for implementation by any party.
 
-## Contact
+## 📧 Contact
 
-Martin Maurer  
-Email: empeamtk@googlemail.com
+**Martin Maurer**  
+Email: empeamtk@googlemail.com  
+GitHub: [@boorich](https://github.com/boorich)
 
+---
+
+**Built with the spirit of robots.txt - simple, voluntary, powerful.**
