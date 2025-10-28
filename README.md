@@ -36,7 +36,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
       "details": {
         "network": "base-sepolia",
         "asset": "0x036CbD...",
-        "price_per_call": 1000000
+        "currency": "USDC"
       }
     },
     "protocol": {
@@ -95,7 +95,7 @@ All historical versions are archived for reference:
       "details": {
         "network": "base-sepolia",
         "asset": "0x036CbD...",
-        "price_per_call": 1000000
+        "currency": "USDC"
       }
     },
     "protocol": {

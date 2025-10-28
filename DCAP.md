@@ -34,7 +34,6 @@ For the complete specification, see [archive/v2.5.md](./archive/v2.5.md).
       "details": {
         "network": "base-sepolia",
         "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-        "price_per_call": 1000000,
         "currency": "USDC"
       }
     },
