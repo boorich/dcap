@@ -1,0 +1,43 @@
+graph TB
+    subgraph "Tool Providers (Distributed)"
+        T1[MCP Tool 1<br/>Weather Service<br/>sid: weather-001]
+        T2[MCP Tool 2<br/>Database Query<br/>sid: db-query-42]
+        T3[MCP Tool 3<br/>Code Analysis<br/>sid: analyzer-xyz]
+        T4[MCP Tool 4<br/>Blockchain API<br/>sid: chain-abc123]
+    end
+    
+    subgraph "Cloud Hub (AWS/Azure)"
+        UDP[UDP Listener<br/>:10191]
+        RELAY[DCAP Relay<br/>Message Aggregator]
+        WS[WebSocket Server<br/>dcap-v2]
+    end
+    
+    subgraph "Agent Consumers"
+        A1[Cursor Agent 1<br/>Tool Discovery]
+        A2[AutoGPT Agent 2<br/>Task Execution]
+        A3[Oracle Agent<br/>Pattern Analysis]
+    end
+    
+    T1 -->|semantic_discover<br/>perf_update| UDP
+    T2 -->|semantic_discover<br/>perf_update| UDP
+    T3 -->|semantic_discover<br/>perf_update| UDP
+    T4 -->|semantic_discover<br/>perf_update| UDP
+    
+    UDP --> RELAY
+    RELAY --> WS
+    
+    WS -->|Real-time Stream| A1
+    WS -->|Real-time Stream| A2
+    WS -->|Real-time Stream| A3
+    
+    style T1 fill:#e1f5ff
+    style T2 fill:#e1f5ff
+    style T3 fill:#e1f5ff
+    style T4 fill:#e1f5ff
+    style UDP fill:#fff4e6
+    style RELAY fill:#fff4e6
+    style WS fill:#fff4e6
+    style A1 fill:#f3e5f5
+    style A2 fill:#f3e5f5
+    style A3 fill:#f3e5f5
+
