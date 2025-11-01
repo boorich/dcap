@@ -6,25 +6,26 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 
 ## 🎯 Quick Start
 
-**Latest Specification:** [DCAP.md](./DCAP.md) - **Version 2.5** (October 2025)
+**Latest Specification:** [DCAP.md](./DCAP.md) - **Version 2.6** (November 2025)
 
 **For automation/parsing:** Always fetch `DCAP.md` - it's a stable URL that always points to the latest version.
 
 ---
 
-## 📋 Current Version: 2.5
+## 📋 Current Version: 2.6
 
 ### Key Features
 
-✅ **Dynamic tool acquisition** with structured `connector` object  
-✅ **MCP transport support** (stdio, SSE, HTTP streaming)  
-✅ **Structured authentication** (x402, bearer, API key, none)  
-✅ **Protocol specification** (MCP, REST, gRPC)  
-✅ **Autonomous capability invocation** without manual configuration  
+✅ **Comprehensive authentication support** (OAuth2, bearer, API key, x402, none)  
+✅ **OAuth2 flow specification** with authorization_code, client_credentials, device_code  
+✅ **Required HTTP headers** for proper content negotiation  
+✅ **Session initialization** for stateful services  
+✅ **Credential acquisition guidance** with `instructions_url` and `registration_url`  
+✅ **Full autonomous tool invocation** with complete connection metadata  
 
-### What's New in v2.5
+### What's New in v2.6
 
-**Added `connector` object to `semantic_discover`:**
+**Enhanced `connector` object with authentication details:**
 ```json
 {
   "connector": {
@@ -35,26 +36,39 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
       "required": true,
       "details": {
         "network": "base-sepolia",
-        "asset": "0x036CbD...",
-        "currency": "USDC"
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "currency": "USDC",
+        "recipient": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+        "price_per_call": 100000
+      }
+    },
+    "headers": {
+      "required": ["Accept", "Content-Type"],
+      "optional": {
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json"
       }
     },
     "protocol": {
       "type": "mcp",
       "version": "2024-11-05"
+    },
+    "session": {
+      "required": false
     }
   }
 }
 ```
 
 **Key Points:**
-- `connector.transport`: MCP transport type (stdio/sse/http)
-- `connector.endpoint`: WHERE to connect (URL or command)
-- `connector.auth`: Authentication requirements with structured details
-- `connector.protocol`: Protocol type, version, and methods
-- **The unlock**: Agents can now discover AND invoke tools without pre-configuration
+- `auth.type`: Now includes `x402` (micropayments), `oauth2`, `bearer`, `api_key`, `none`
+- **x402 micropayments**: Pay-per-call with crypto - the future of tool monetization
+- `auth.details`: Includes `instructions_url`, `credential_source`, `registration_url`
+- `headers`: Required and optional HTTP headers for content negotiation
+- `session`: Initialization requirements for stateful services
+- **The unlock**: Agents can autonomously handle x402 payments, OAuth, headers, and sessions
 
-**Full changelog:** See [archive/v2.5.md](./archive/v2.5.md)
+**Full changelog:** See [archive/v2.6.md](./archive/v2.6.md)
 
 ---
 
@@ -62,6 +76,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 
 All historical versions are archived for reference:
 
+- **[v2.6](./archive/v2.6.md)** (November 2025) - Enhanced authentication (OAuth2, headers, sessions)
 - **[v2.5](./archive/v2.5.md)** (October 2025) - Dynamic tool acquisition with `connector` object
 - **[v2.4](./archive/v2.4.md)** (October 2025) - Format-agnostic agent identification
 - **[v2.3](./archive/v2.3.md)** (October 2025) - Payment attribution with `ctx.payer`
@@ -75,17 +90,18 @@ All historical versions are archived for reference:
 
 ### For Tool Providers
 
-**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.5)
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.6)
 
 ```javascript
-// Broadcast semantic_discover with connector details
+// Broadcast semantic_discover with full connector details (v2.6)
+// Example: x402 micropayment tool
 {
   "v": 2,
   "t": "semantic_discover",
   "sid": "your-tool-id",
-  "tool": "read_file",
-  "does": "Reads file contents from filesystem",
-  "when": ["need file contents", "read configuration"],
+  "tool": "get_strategy_code",
+  "does": "Retrieves algorithmic trading strategy source code",
+  "when": ["need trading strategy", "backtest algorithm"],
   "connector": {
     "transport": "http",
     "endpoint": "https://your-server.com:8080/mcp",
@@ -94,13 +110,25 @@ All historical versions are archived for reference:
       "required": true,
       "details": {
         "network": "base-sepolia",
-        "asset": "0x036CbD...",
-        "currency": "USDC"
+        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        "currency": "USDC",
+        "recipient": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+        "price_per_call": 100000
+      }
+    },
+    "headers": {
+      "required": ["Accept", "Content-Type"],
+      "optional": {
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json"
       }
     },
     "protocol": {
       "type": "mcp",
       "version": "2024-11-05"
+    },
+    "session": {
+      "required": false
     }
   }
 }
@@ -118,31 +146,37 @@ All historical versions are archived for reference:
 
 ### For Agent Consumers
 
-**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.5)
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.6)
 
-- Parse `connector` object from `semantic_discover` messages
-- Implement MCP transport support (stdio, SSE, HTTP streaming)
-- Handle authentication requirements (x402, bearer, API key)
-- Dynamically connect to discovered tools without pre-configuration
+- Parse enhanced `connector` object with auth, headers, and session details
+- Implement OAuth2 flows (authorization_code, client_credentials, device_code)
+- Handle required HTTP headers for proper content negotiation
+- Initialize sessions when `session.required: true`
+- Use `instructions_url` and `registration_url` to guide credential acquisition
+- Dynamically connect to discovered tools with full authentication support
 
 ### For Intelligence Systems
 
-**Required:** Implement [DCAP.md](./DCAP.md) (v2.5)
+**Required:** Implement [DCAP.md](./DCAP.md) (v2.6)
 
 ```javascript
-// Index tools by transport and auth requirements
+// Index tools by auth complexity and requirements
 const tool = {
   ...semanticDiscoverMessage,
   transport: connector.transport,
-  authType: connector.auth.type
+  authType: connector.auth.type,
+  authComplexity: calculateAuthComplexity(connector.auth),
+  requiresHeaders: connector.headers?.required || [],
+  requiresSession: connector.session?.required || false
 };
 
-// Include connector info in recommendations
+// Include full connector info in recommendations
 function recommendTool(query) {
   const match = findSemanticMatch(query);
   return {
     tool: match.tool,
-    connector: match.connector,  // Agent can now invoke directly
+    connector: match.connector,  // Full auth, headers, session info
+    setupRequired: match.connector.auth.details.instructions_url,
     reasoning: "..."
   };
 }
@@ -168,7 +202,8 @@ DCAP is **Google for AI agents** - but with the ability to call any discovered c
 
 | Use Case | Version |
 |----------|---------|
-| New implementations | [DCAP.md](./DCAP.md) (v2.5) |
+| New implementations | [DCAP.md](./DCAP.md) (v2.6) |
+| OAuth2 / Session support | v2.6+ (required) |
 | Dynamic tool acquisition | v2.5+ (required) |
 | Agent identification | v2.4+ |
 | Payment tracking | v2.3+ |
