@@ -6,16 +6,18 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 
 ## 🎯 Quick Start
 
-**Latest Specification:** [DCAP.md](./DCAP.md) - **Version 2.6** (November 2025)
+**Latest Specification:** [DCAP.md](./DCAP.md) - **Version 2.7** (December 2025)
 
 **For automation/parsing:** Always fetch `DCAP.md` - it's a stable URL that always points to the latest version.
 
 ---
 
-## 📋 Current Version: 2.6
+## 📋 Current Version: 2.7
 
 ### Key Features
 
+✅ **ERC-8004 blockchain registration integration** - Link to on-chain trust layers  
+✅ **Two-tier architecture** - Fast DCAP discovery + blockchain trust anchoring  
 ✅ **Comprehensive authentication support** (OAuth2, bearer, API key, x402, none)  
 ✅ **OAuth2 flow specification** with authorization_code, client_credentials, device_code  
 ✅ **Required HTTP headers** for proper content negotiation  
@@ -23,7 +25,34 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 ✅ **Credential acquisition guidance** with `instructions_url` and `registration_url`  
 ✅ **Full autonomous tool invocation** with complete connection metadata  
 
-### What's New in v2.6
+### What's New in v2.7
+
+**ERC-8004 Blockchain Registration:**
+```json
+{
+  "blockchain_registrations": [
+    {
+      "protocol": "erc-8004",
+      "namespace": "eip155",
+      "chain_id": 1,
+      "registry": "0x1234...",
+      "agent_id": 42,
+      "verification_url": "https://etherscan.io/nft/0x.../42"
+    }
+  ]
+}
+```
+
+**Key Points:**
+- **DCAP = Off-chain discovery layer** (fast, free, practical)
+- **ERC-8004 = On-chain trust layer** (immutable, reputation, identity)
+- **Together**: Fast discovery with blockchain trust anchoring
+- **Optional**: Tools work without blockchain registration
+- **Strategic**: DCAP complements ERC-8004, doesn't compete
+
+**Full changelog:** See [archive/v2.7.md](./archive/v2.7.md)
+
+### What's New in v2.6 (Previous)
 
 **Enhanced `connector` object with authentication details:**
 ```json
@@ -76,6 +105,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 
 All historical versions are archived for reference:
 
+- **[v2.7](./archive/v2.7.md)** (December 2025) - ERC-8004 blockchain registration integration
 - **[v2.6](./archive/v2.6.md)** (November 2025) - Enhanced authentication (OAuth2, headers, sessions)
 - **[v2.5](./archive/v2.5.md)** (October 2025) - Dynamic tool acquisition with `connector` object
 - **[v2.4](./archive/v2.4.md)** (October 2025) - Format-agnostic agent identification
@@ -90,7 +120,7 @@ All historical versions are archived for reference:
 
 ### For Tool Providers
 
-**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.6)
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.7)
 
 ```javascript
 // Broadcast semantic_discover with full connector details (v2.6)
@@ -146,7 +176,7 @@ All historical versions are archived for reference:
 
 ### For Agent Consumers
 
-**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.6)
+**Recommended:** Implement [DCAP.md](./DCAP.md) (v2.7)
 
 - Parse enhanced `connector` object with auth, headers, and session details
 - Implement OAuth2 flows (authorization_code, client_credentials, device_code)
@@ -202,7 +232,8 @@ DCAP is **Google for AI agents** - but with the ability to call any discovered c
 
 | Use Case | Version |
 |----------|---------|
-| New implementations | [DCAP.md](./DCAP.md) (v2.6) |
+| New implementations | [DCAP.md](./DCAP.md) (v2.7) |
+| Blockchain trust integration | v2.7+ (optional) |
 | OAuth2 / Session support | v2.6+ (required) |
 | Dynamic tool acquisition | v2.5+ (required) |
 | Agent identification | v2.4+ |
