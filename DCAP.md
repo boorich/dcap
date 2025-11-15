@@ -19,7 +19,7 @@ Together: Tools claim performance, agents verify reality.
 
 ---
 
-For the complete specification, see [archive/DCAP_v3.md](./archive/DCAP_v3.md).
+For the complete specification, see [archive/DCAP_v3.md](./archive/v3.0.md).
 
 ## Quick Reference: Version 3.0 Changes
 
