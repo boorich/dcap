@@ -1,177 +1,196 @@
 # Dynamic Capability Acquisition Protocol (DCAP)
 
-**Version**: 2.7 (Latest)  
+**Version**: 3.0 (Latest)  
 **Date**: December 2025  
 **Author**: M. Maurer  
 
 > **Note:** This file always contains the latest version of the DCAP specification.  
-> For specific versions, see [archive/v2.7.md](./archive/v2.7.md), [archive/v2.6.md](./archive/v2.6.md), [archive/v2.5.md](./archive/v2.5.md), [archive/v2.4.md](./archive/v2.4.md), [archive/v2.3.md](./archive/v2.3.md), [archive/v2.2.md](./archive/v2.2.md), [archive/v2.1.md](./archive/v2.1.md), [archive/v2.0.md](./archive/v2.0.md)
+> For specific versions, see the version history below.
 
 ---
 
-**IMPORTANT:** Version 2.7 introduces optional blockchain registration metadata, enabling integration with ERC-8004 and other on-chain trust layers. DCAP is now positioned as the off-chain discovery layer that complements blockchain-based agent trust systems.
+**IMPORTANT:** Version 3.0 introduces agent verification through the `usage_receipt` message type. This enables third-party observation of tool performance alongside tool self-reports, providing the foundation for reputation systems based on agent consensus rather than tool claims.
 
-**Two-Layer Architecture:**
-- **DCAP (Off-Chain)**: Fast discovery, connection automation, performance telemetry, zero cost
-- **ERC-8004 (On-Chain)**: Immutable identity, reputation aggregation, cryptographic validation
+**Key Architectural Distinction:**
+- **Tools** (MCP servers): Identified by `sid`, broadcast capabilities and self-reports
+- **Agents** (consumers): Identified by `agent_id`, broadcast observed tool behavior
 
-Together: Fast discovery with blockchain trust anchoring.
+Together: Tools claim performance, agents verify reality.
 
 ---
 
-For the complete specification, see [archive/v2.7.md](./archive/v2.7.md).
+For the complete specification, see [archive/DCAP_v3.md](./archive/DCAP_v3.md).
 
-## Quick Reference: Version 2.7 Changes
+## Quick Reference: Version 3.0 Changes
 
-### ERC-8004 Blockchain Registration Integration
+### Agent Verification via Usage Receipt
 
-Version 2.7 adds optional `blockchain_registrations` array to `semantic_discover` messages, enabling tools to advertise their on-chain trust registrations:
+Version 3.0 introduces a new message type for agents to report their observations:
 
 ```json
 {
   "v": 2,
-  "t": "semantic_discover",
+  "t": "usage_receipt",
+  "ts": 1735000000,
+  "agent_id": "agent-alice",
   "tool": "financial_advisor",
-  "does": "Provides SEC-compliant investment advice",
-  "connector": { /* ... full connection details ... */ },
+  "tool_sid": "finadv-mcp",
+  "success": false,
+  "exec_ms": 5243,
+  "cost_paid": 100000,
+  "currency": "USDC",
+  "error_observed": "timeout after 5s",
   "blockchain_registrations": [
     {
-      "protocol": "erc-8004",
-      "namespace": "eip155",
-      "chain_id": 1,
-      "registry": "0x1234...",
-      "agent_id": 42,
-      "verification_url": "https://etherscan.io/nft/0x.../42"
+      "agentId": 789,
+      "agentRegistry": "eip155:1:0xabcd...",
+      "verification_url": "https://etherscan.io/nft/0xabcd.../789"
     }
-  ],
-  "proven_by": { "uses": 5420, "success_rate": 0.98 }
+  ]
 }
 ```
 
 ### Key Points:
-- **`blockchain_registrations`**: Optional array linking to ERC-8004 or other blockchain registries
-- **Two-tier trust**: DCAP provides fast discovery, ERC-8004 provides immutable trust
-- **Complementary layers**: DCAP solves discovery/connection, ERC-8004 solves trust/identity
-- **Backward compatible**: Tools without blockchain registration work unchanged
-- **Strategic positioning**: DCAP is the off-chain component that makes blockchain trust practical
+- **`usage_receipt`**: NEW message type for agent observations
+- **`agent_id`**: Agents identify themselves separately from tools
+- **Third-party verification**: Agents report what they actually observed, not what tools claimed
+- **Blockchain identity**: Agents can optionally anchor their identity on-chain (ERC-8004, etc.)
+- **Protocol purity**: Spec defines message formats; intelligence systems decide how to use them
+- **No breaking changes for tools**: Tools continue working unchanged
 
-### Agent Workflow (v2.7):
+### Agent Workflow (v3.0):
 ```javascript
-// 1. Discover tool via DCAP stream (milliseconds)
-const tool = discoverTool('investment advice');
+// 1. Discover tool via DCAP stream
+const tool = discoverTool('financial advice');
 
-// 2. Check for blockchain registration
-if (tool.blockchain_registrations && tool.blockchain_registrations.length > 0) {
-  // 3. Verify on-chain (for high-value scenarios)
-  const verification = await verifyERC8004(tool.blockchain_registrations[0]);
-  if (!verification.verified) {
-    throw new Error('Blockchain verification failed');
-  }
-}
+// 2. Invoke and measure
+const start = Date.now();
+const result = await invokeTool(tool, args);
+const execMs = Date.now() - start;
 
-// 4. Use DCAP connector to connect (fast, automated)
-const { transport, endpoint, auth, headers } = tool.connector;
-const client = await connectTo(transport, endpoint, auth, headers);
-
-// 5. Invoke tool
-const result = await client.callTool(tool.tool, args);
-
-// 6. Post feedback to both DCAP (real-time) and blockchain (permanent)
-broadcastPerfUpdate(tool, result);
-if (tool.blockchain_registrations) {
-  await submitBlockchainFeedback(tool.blockchain_registrations[0], result);
-}
+// 3. Broadcast what you actually observed
+broadcastUsageReceipt({
+  agent_id: 'agent-alice',
+  tool: tool.tool,
+  tool_sid: tool.sid,
+  success: true,
+  exec_ms: execMs,
+  cost_paid: result.cost,
+  blockchain_registrations: myBlockchainId  // optional
+});
 ```
+
+### What Changed from v2.7:
+- **Corrected:** Moved `blockchain_registrations` from tool messages to agent messages
+- **Added:** `usage_receipt` message type for agent observations
+- **Clarified:** Tools report via `perf_update` (self-report), agents report via `usage_receipt` (observation)
+- **Architectural fix:** MCP servers aren't agents; blockchain registration is for agent identity
 
 ---
 
-## Quick Reference: Version 2.6 Changes (Previous)
+## Version History
 
-### Enhanced `connector` Object with Authentication Details
+| Version | Date | Key Feature |
+|---------|------|-------------|
+| [3.0](./archive/DCAP_v3.md) | December 2025 | Agent verification (`usage_receipt`), corrected blockchain architecture |
+| [2.7](./archive/v2.7.md) | November 2025 | Blockchain registration (architectural error, corrected in v3.0) |
+| [2.6](./archive/v2.6.md) | November 2025 | Enhanced authentication (OAuth2, x402, API keys) |
+| [2.5](./archive/v2.5.md) | October 2025 | Connector object for connection automation |
+| [2.4](./archive/v2.4.md) | October 2025 | Enhanced security considerations |
+| [2.3](./archive/v2.3.md) | October 2025 | Pattern detection capabilities |
+| [2.2](./archive/v2.2.md) | October 2025 | Cost tracking (`cost_paid`, `currency`) |
+| [2.1](./archive/v2.1.md) | October 2025 | Context tracking (`ctx` field) |
+| [2.0](./archive/v2.0.md) | September 2025 | Initial public specification |
+
+---
+
+## Quick Reference: Message Types
+
+### 1. Semantic Discovery (`t: "semantic_discover"`)
+**Broadcast by:** Tools
+
+Tools advertise their capabilities with connection details:
 ```json
 {
   "v": 2,
   "t": "semantic_discover",
-  "tool": "get_strategy_code",
-  "does": "Retrieves trading strategy source code",
-  "when": ["need trading strategy", "backtest algorithm"],
+  "sid": "finadv-mcp",
+  "tool": "financial_advisor",
+  "does": "Provides SEC-compliant investment advice",
+  "when": ["investment advice", "portfolio analysis"],
   "connector": {
     "transport": "http",
-    "endpoint": "https://robonet.example.com:8080/mcp",
+    "endpoint": "https://finadvice.ai/mcp",
     "auth": {
-      "type": "x402",
+      "type": "oauth2",
       "required": true,
-      "details": {
-        "network": "base-sepolia",
-        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-        "currency": "USDC",
-        "recipient": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
-        "price_per_call": 100000
-      }
-    },
-    "headers": {
-      "required": ["Accept", "Content-Type"],
-      "optional": {
-        "Accept": "application/json, text/event-stream",
-        "Content-Type": "application/json"
-      }
-    },
-    "protocol": {
-      "type": "mcp",
-      "version": "2024-11-05"
-    },
-    "session": {
-      "required": false
+      "details": { /* OAuth2 configuration */ }
     }
-  }
+  },
+  "proven_by": {"uses": 5420, "success_rate": 0.98}
 }
 ```
 
-### Key Points:
-- **`connector.auth.type`**: Now includes `oauth2`, `bearer`, `api_key`, and `x402` (micropayments)
-- **`auth.details`**: Comprehensive auth specs including `instructions_url`, `credential_source`
-- **`connector.headers`**: Required and optional HTTP headers for proper content negotiation
-- **`connector.session`**: Session initialization requirements for stateful services
-- **x402 micropayments**: Pay-per-call with crypto (the future of tool monetization)
-- **Full OAuth2 support**: `flow`, `auth_url`, `token_url`, `scopes`, `pkce_required`
-- **Credential guidance**: Agents know WHERE and HOW to obtain required credentials
+### 2. Performance Update (`t: "perf_update"`)
+**Broadcast by:** Tools
 
-### Agent Workflow (v2.6):
-```javascript
-// 1. Discover tool via DCAP stream
-const tool = discoverTool('get trading strategy');
-
-// 2. Parse connector details
-const { transport, endpoint, auth, headers, session } = tool.connector;
-
-// 3. Prepare x402 payment (or other auth)
-if (auth.type === 'x402') {
-  const payment = await initializeX402Payment(
-    auth.details.network,
-    auth.details.asset,
-    auth.details.price_per_call
-  );
-  credentials = payment;
-} else if (auth.required && !hasCredential(auth.details.credential_source)) {
-  throw new Error(`Setup required: ${auth.details.instructions_url}`);
+Tools report their own execution (self-report):
+```json
+{
+  "v": 2,
+  "t": "perf_update",
+  "sid": "finadv-mcp",
+  "tool": "financial_advisor",
+  "exec_ms": 245,
+  "success": true,
+  "cost_paid": 100000,
+  "currency": "USDC"
 }
+```
 
-// 4. Prepare authentication and headers
-const credentials = await getCredentials(auth);
-const requestHeaders = prepareHeaders(headers, credentials, auth);
+### 3. Usage Receipt (`t: "usage_receipt"`) - NEW in v3.0
+**Broadcast by:** Agents
 
-// 5. Establish connection with auth
-const client = await connectTo(transport, endpoint, requestHeaders);
-
-// 6. Initialize session if required
-if (session?.required) {
-  await initializeSession(client, session);
+Agents report what they observed (third-party verification):
+```json
+{
+  "v": 2,
+  "t": "usage_receipt",
+  "agent_id": "agent-alice",
+  "tool": "financial_advisor",
+  "tool_sid": "finadv-mcp",
+  "success": true,
+  "exec_ms": 250,
+  "cost_paid": 100000,
+  "currency": "USDC",
+  "blockchain_registrations": [/* optional identity */]
 }
-
-// 7. Invoke tool (payment happens automatically via x402 header)
-const result = await client.callTool(tool.tool, args);
 ```
 
 ---
 
-For full specification including ERC-8004 integration, OAuth2 flows, session management, and comprehensive examples, see [archive/v2.7.md](./archive/v2.7.md).
+## Implementation Paths
+
+### For Tool Providers:
+**No changes required from v2.6/v2.7**
+- Continue broadcasting `semantic_discover` with connector details
+- Continue broadcasting `perf_update` with execution data
+- Your tools work unchanged in v3.0
+
+### For Agent Developers:
+**New capability in v3.0**
+- Broadcast `usage_receipt` after tool invocations
+- Report what you actually observed (exec_ms, success, cost_paid)
+- Optionally include blockchain identity for reputation weighting
+- Help build trustworthy reputation systems
+
+### For Hub Operators:
+**New message type to handle**
+- Distribute `usage_receipt` messages like other message types
+- Optionally compare tool claims vs agent observations
+- Optionally calculate reputation from agent consensus
+- Protocol doesn't prescribe HOW - use data as needed
+
+---
+
+For the complete v3.0 specification including all message formats, transport protocols, security considerations, and implementation examples, see [archive/DCAP_v3.md](./archive/DCAP_v3.md).
