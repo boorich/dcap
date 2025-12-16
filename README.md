@@ -10,7 +10,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 
 **For automation/parsing:** Always fetch `DCAP.md` - it's a stable URL that always points to the latest version.
 
-**Formal Verification:** [github.com/dcap-protocol/ccap-haskell](https://github.com/dcap-protocol/ccap-haskell) - Category laws verified in Haskell
+**Formal Verification:** [github.com/dcap-protocol/ccap-haskell](https://github.com/boorich/ccap-haskell) - Category laws verified in Haskell
 
 ---
 
