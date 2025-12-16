@@ -35,7 +35,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 **Typed Signatures:**
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "semantic_discover",
   "sid": "summarizer-mcp",
   "tool": "summarize_text",
@@ -53,7 +53,7 @@ DCAP is a decentralized protocol enabling autonomous agents to discover, evaluat
 **Composite Capabilities:**
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "composite_capability",
   "agent_id": "agent-alice",
   "composite_id": "alice-url-to-summary",
@@ -130,7 +130,7 @@ All historical versions are archived for reference:
 Broadcast your capabilities with typed signature:
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "semantic_discover",
   "sid": "your-tool-id",
   "tool": "your_tool",
@@ -154,7 +154,7 @@ Broadcast your capabilities with typed signature:
 Report your execution:
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "perf_update",
   "sid": "your-tool-id",
   "tool": "your_tool",
@@ -185,7 +185,7 @@ const path = findPath('URL', 'Text'); // Returns cheapest tool chain
 **3. Validate and declare composition:**
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "composite_capability",
   "agent_id": "your-agent-id",
   "composite_id": "your-composition-id",
@@ -197,7 +197,7 @@ const path = findPath('URL', 'Text'); // Returns cheapest tool chain
 **4. Execute and report:**
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "composite_receipt",
   "agent_id": "your-agent-id",
   "composite_id": "your-composition-id",

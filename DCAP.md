@@ -52,7 +52,7 @@ Tools now declare explicit type signatures:
 
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "semantic_discover",
   "sid": "summarizer-mcp",
   "tool": "summarize_text",
@@ -73,7 +73,7 @@ Agents declare verified tool chains:
 
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "composite_capability",
   "agent_id": "agent-alice",
   "composite_id": "alice-url-to-summary",
@@ -97,7 +97,7 @@ Agents report composition execution with per-step metrics:
 
 ```json
 {
-  "v": 2,
+  "v": 3,
   "t": "composite_receipt",
   "agent_id": "agent-alice",
   "composite_id": "alice-url-to-summary",
