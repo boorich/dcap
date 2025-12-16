@@ -1,6 +1,6 @@
 # Dynamic Capability Acquisition Protocol (DCAP)
 
-**Version**: 3.0 (Latest)  
+**Version**: 3.1 (Latest)  
 **Date**: December 2025  
 **Author**: M. Maurer  
 
@@ -9,82 +9,135 @@
 
 ---
 
-**IMPORTANT:** Version 3.0 introduces agent verification through the `usage_receipt` message type. This enables third-party observation of tool performance alongside tool self-reports, providing the foundation for reputation systems based on agent consensus rather than tool claims.
+**IMPORTANT:** Version 3.1 introduces **categorical compliance** based on the formal C_cap category theory foundation. Capabilities now form a mathematical category where tools are morphisms with typed signatures, enabling verified composition with provable correctness guarantees.
 
-**Key Architectural Distinction:**
-- **Tools** (MCP servers): Identified by `sid`, broadcast capabilities and self-reports
-- **Agents** (consumers): Identified by `agent_id`, broadcast observed tool behavior
+**Key Additions in v3.1:**
+- **Typed signatures**: Tools declare explicit `input → output` types
+- **Verified composition**: Agents can declare and execute type-checked tool chains
+- **Cost enrichment**: Costs are provably additive under composition
+- **Category laws**: Identity and associativity laws formally verified
 
-Together: Tools claim performance, agents verify reality.
+**Reference Implementation:** [github.com/dcap-protocol/ccap-haskell](https://github.com/dcap-protocol/ccap-haskell)
 
 ---
 
-For the complete specification, see [archive/DCAP_v3.md](./archive/v3.0.md).
+For the complete specification, see [archive/DCAP_v3.1.md](./archive/v3.1.md).
 
-## Quick Reference: Version 3.0 Changes
+## Quick Reference: Version 3.1 Changes
 
-### Agent Verification via Usage Receipt
+### Categorical Foundation (C_cap)
 
-Version 3.0 introduces a new message type for agents to report their observations:
+DCAP capabilities now form a category where:
+
+```
+Objects:     Capability types (Text, Image, JSON, URL, ...)
+Morphisms:   Tools with typed signatures A → B
+Composition: Tool chaining (g ∘ f)
+Identity:    No-op transforms id_A for each type A
+Enrichment:  Costs over (ℕ, +, 0)
+```
+
+**Category Laws (formally verified):**
+```
+Left Identity:   id_B ∘ f = f
+Right Identity:  f ∘ id_A = f
+Associativity:   h ∘ (g ∘ f) = (h ∘ g) ∘ f
+Cost Identity:   cost(id_A) = 0
+Cost Additivity: cost(g ∘ f) = cost(f) + cost(g)
+```
+
+### Typed Signatures
+
+Tools now declare explicit type signatures:
 
 ```json
 {
   "v": 2,
-  "t": "usage_receipt",
-  "ts": 1735000000,
+  "t": "semantic_discover",
+  "sid": "summarizer-mcp",
+  "tool": "summarize_text",
+  "signature": {
+    "input": "Text",
+    "output": "Maybe<Text>",
+    "cost": 5
+  },
+  "does": "Summarizes long text into key points",
+  "when": ["summarization", "tldr"],
+  "connector": { /* ... */ }
+}
+```
+
+### Composite Capabilities (NEW)
+
+Agents declare verified tool chains:
+
+```json
+{
+  "v": 2,
+  "t": "composite_capability",
   "agent_id": "agent-alice",
-  "tool": "financial_advisor",
-  "tool_sid": "finadv-mcp",
-  "success": false,
-  "exec_ms": 5243,
-  "cost_paid": 100000,
-  "currency": "USDC",
-  "error_observed": "timeout after 5s",
-  "blockchain_registrations": [
-    {
-      "agentId": 789,
-      "agentRegistry": "eip155:1:0xabcd...",
-      "verification_url": "https://etherscan.io/nft/0xabcd.../789"
-    }
+  "composite_id": "alice-url-to-summary",
+  "chain": [
+    {"tool_sid": "fetcher-mcp", "tool": "fetch_url", "signature": {"input": "URL", "output": "Maybe<HTML>", "cost": 2}},
+    {"tool_sid": "extractor-mcp", "tool": "html_to_text", "signature": {"input": "HTML", "output": "Maybe<Text>", "cost": 1}},
+    {"tool_sid": "summary-mcp", "tool": "summarize", "signature": {"input": "Text", "output": "Maybe<Text>", "cost": 5}}
+  ],
+  "signature": {"input": "URL", "output": "Maybe<Text>", "cost": 8}
+}
+```
+
+**Validation Rules (enforced by agents and hubs):**
+1. Type continuity: `chain[i].output == chain[i+1].input`
+2. Endpoint agreement: `signature.input == chain[0].input`, `signature.output == chain[n-1].output`
+3. Cost additivity: `signature.cost == sum(chain[i].cost)`
+
+### Composite Receipt (NEW)
+
+Agents report composition execution with per-step metrics:
+
+```json
+{
+  "v": 2,
+  "t": "composite_receipt",
+  "agent_id": "agent-alice",
+  "composite_id": "alice-url-to-summary",
+  "success": true,
+  "exec_ms": 523,
+  "cost_paid": 8,
+  "steps": [
+    {"tool_sid": "fetcher-mcp", "tool": "fetch_url", "success": true, "exec_ms": 203, "cost_paid": 2},
+    {"tool_sid": "extractor-mcp", "tool": "html_to_text", "success": true, "exec_ms": 94, "cost_paid": 1},
+    {"tool_sid": "summary-mcp", "tool": "summarize", "success": true, "exec_ms": 226, "cost_paid": 5}
   ]
 }
 ```
 
-### Key Points:
-- **`usage_receipt`**: NEW message type for agent observations
-- **`agent_id`**: Agents identify themselves separately from tools
-- **Third-party verification**: Agents report what they actually observed, not what tools claimed
-- **Blockchain identity**: Agents can optionally anchor their identity on-chain (ERC-8004, etc.)
-- **Protocol purity**: Spec defines message formats; intelligence systems decide how to use them
-- **No breaking changes for tools**: Tools continue working unchanged
+### Core Types
 
-### Agent Workflow (v3.0):
-```javascript
-// 1. Discover tool via DCAP stream
-const tool = discoverTool('financial advice');
+| Type | Description |
+|------|-------------|
+| `Text` | UTF-8 encoded text |
+| `JSON` | Valid JSON document |
+| `Image` | Binary image data |
+| `Audio` | Binary audio data |
+| `Video` | Binary video data |
+| `Binary` | Arbitrary binary data |
+| `URL` | Valid URL string |
+| `HTML` | HTML document |
+| `Markdown` | Markdown formatted text |
+| `PDF` | PDF document |
+| `Bool` | Boolean value |
+| `Number` | Numeric value |
+| `List<T>` | Ordered list of type T |
+| `Maybe<T>` | Optional value (for fallible tools) |
+| `Void` | Unit type (effects-only tools) |
 
-// 2. Invoke and measure
-const start = Date.now();
-const result = await invokeTool(tool, args);
-const execMs = Date.now() - start;
+### Compliance Levels
 
-// 3. Broadcast what you actually observed
-broadcastUsageReceipt({
-  agent_id: 'agent-alice',
-  tool: tool.tool,
-  tool_sid: tool.sid,
-  success: true,
-  exec_ms: execMs,
-  cost_paid: result.cost,
-  blockchain_registrations: myBlockchainId  // optional
-});
-```
+- **C_cap-compliant**: Has `signature` with registered types; can participate in verified composition
+- **DCAP-basic**: No `signature`; semantic discovery only; cannot participate in typed composition
 
-### What Changed from v2.7:
-- **Corrected:** Moved `blockchain_registrations` from tool messages to agent messages
-- **Added:** `usage_receipt` message type for agent observations
-- **Clarified:** Tools report via `perf_update` (self-report), agents report via `usage_receipt` (observation)
-- **Architectural fix:** MCP servers aren't agents; blockchain registration is for agent identity
+Both are valid DCAP participants. Full backward compatibility with v3.0.
 
 ---
 
@@ -92,7 +145,8 @@ broadcastUsageReceipt({
 
 | Version | Date | Key Feature |
 |---------|------|-------------|
-| [3.0](./archive/DCAP_v3.md) | December 2025 | Agent verification (`usage_receipt`), corrected blockchain architecture |
+| [3.1](./archive/v3.1.md) | December 2025 | Categorical compliance (C_cap), typed signatures, verified composition |
+| [3.0](./archive/v3.0.md) | December 2025 | Agent verification (`usage_receipt`), corrected blockchain architecture |
 | [2.7](./archive/v2.7.md) | November 2025 | Blockchain registration (architectural error, corrected in v3.0) |
 | [2.6](./archive/v2.6.md) | November 2025 | Enhanced authentication (OAuth2, x402, API keys) |
 | [2.5](./archive/v2.5.md) | October 2025 | Connector object for connection automation |
@@ -106,91 +160,68 @@ broadcastUsageReceipt({
 
 ## Quick Reference: Message Types
 
-### 1. Semantic Discovery (`t: "semantic_discover"`)
-**Broadcast by:** Tools
-
-Tools advertise their capabilities with connection details:
-```json
-{
-  "v": 2,
-  "t": "semantic_discover",
-  "sid": "finadv-mcp",
-  "tool": "financial_advisor",
-  "does": "Provides SEC-compliant investment advice",
-  "when": ["investment advice", "portfolio analysis"],
-  "connector": {
-    "transport": "http",
-    "endpoint": "https://finadvice.ai/mcp",
-    "auth": {
-      "type": "oauth2",
-      "required": true,
-      "details": { /* OAuth2 configuration */ }
-    }
-  },
-  "proven_by": {"uses": 5420, "success_rate": 0.98}
-}
-```
-
-### 2. Performance Update (`t: "perf_update"`)
-**Broadcast by:** Tools
-
-Tools report their own execution (self-report):
-```json
-{
-  "v": 2,
-  "t": "perf_update",
-  "sid": "finadv-mcp",
-  "tool": "financial_advisor",
-  "exec_ms": 245,
-  "success": true,
-  "cost_paid": 100000,
-  "currency": "USDC"
-}
-```
-
-### 3. Usage Receipt (`t: "usage_receipt"`) - NEW in v3.0
-**Broadcast by:** Agents
-
-Agents report what they observed (third-party verification):
-```json
-{
-  "v": 2,
-  "t": "usage_receipt",
-  "agent_id": "agent-alice",
-  "tool": "financial_advisor",
-  "tool_sid": "finadv-mcp",
-  "success": true,
-  "exec_ms": 250,
-  "cost_paid": 100000,
-  "currency": "USDC",
-  "blockchain_registrations": [/* optional identity */]
-}
-```
+| Message Type | Broadcaster | Purpose |
+|--------------|-------------|---------|
+| `semantic_discover` | Tools | Advertise capabilities with typed signatures |
+| `perf_update` | Tools | Self-report execution metrics |
+| `usage_receipt` | Agents | Report observed tool behavior |
+| `composite_capability` | Agents | Declare verified tool composition |
+| `composite_receipt` | Agents | Report composition execution |
+| `error_pattern` | Tools | Report recurring error patterns |
 
 ---
 
 ## Implementation Paths
 
 ### For Tool Providers:
-**No changes required from v2.6/v2.7**
-- Continue broadcasting `semantic_discover` with connector details
-- Continue broadcasting `perf_update` with execution data
-- Your tools work unchanged in v3.0
+**Recommended: Add `signature` for C_cap compliance**
+```json
+"signature": {
+  "input": "<input_type>",
+  "output": "<output_type>",
+  "cost": <cost_value>
+}
+```
+- Use `Maybe<T>` for tools that can fail
+- Report `cost_paid` matching declared `signature.cost`
+- Existing v3.0 tools work unchanged (DCAP-basic mode)
 
 ### For Agent Developers:
-**New capability in v3.0**
-- Broadcast `usage_receipt` after tool invocations
-- Report what you actually observed (exec_ms, success, cost_paid)
-- Optionally include blockchain identity for reputation weighting
-- Help build trustworthy reputation systems
+**New capabilities in v3.1**
+- Build type graphs from discovered `signature` fields
+- Plan compositions via graph search (Dijkstra for cost optimization)
+- Validate type continuity and cost additivity before execution
+- Broadcast `composite_capability` before executing chains
+- Broadcast `composite_receipt` with per-step metrics
 
 ### For Hub Operators:
-**New message type to handle**
-- Distribute `usage_receipt` messages like other message types
-- Optionally compare tool claims vs agent observations
-- Optionally calculate reputation from agent consensus
-- Protocol doesn't prescribe HOW - use data as needed
+**New validation responsibilities**
+- Validate `composite_capability` for categorical correctness
+- Reject compositions violating type continuity or cost additivity
+- Optionally index tools by `signature.input`/`signature.output` for composition queries
 
 ---
 
-For the complete v3.0 specification including all message formats, transport protocols, security considerations, and implementation examples, see [archive/DCAP_v3.md](./archive/DCAP_v3.md).
+## Roadmap
+
+| Version | Feature |
+|---------|---------|
+| **v3.1** | C_cap — pure morphisms, category laws verified |
+| **v3.2** | C_cap_K — Kleisli extension for effectful morphisms (`Maybe`, `List`, `IO`) |
+| Future | Monoidal categories for parallel composition |
+| Future | On-chain composition registry |
+
+---
+
+## References
+
+- [C_cap Haskell Implementation](https://github.com/boorich/ccap-haskell) — Formal verification of category laws
+- [Complete v3.1 Specification](./archive/v3.1.md) — Full protocol spec (1900 lines)
+- [MCP Specification](https://modelcontextprotocol.io) — Model Context Protocol
+
+---
+
+## Authors
+
+Martin Maurer  
+Email: empeamtk@googlemail.com
